@@ -3,11 +3,4 @@ kind: Kustomization
 resources:
 - ../../base
 - namespace.yaml
-patches:
-- path: ingress_patch.json
-  target:
-    group: networking.k8s.io
-    version: v1
-    kind: Ingress
-    name: devops-toolkit
-namespace: production
+namespace: argo
