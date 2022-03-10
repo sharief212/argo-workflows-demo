@@ -1,0 +1,3 @@
+kustomize:
+  images:
+  - sharief212/devops-toolkit:1.0.3
