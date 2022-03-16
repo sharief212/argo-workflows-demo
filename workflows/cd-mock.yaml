@@ -11,9 +11,6 @@ spec:
   - name: kaniko-secret
     secret:
       secretName: regcred
-      items:
-        - key: .dockerconfigjson
-          path: config.json
   templates:
   - name: full
     dag:
@@ -30,7 +27,7 @@ spec:
           - name: container_image
             value: sharief212/devops-toolkit
           - name: container_tag
-            value: "1.0.4"
+            value: "1.0.6"
       - name: deploy-staging
         template: echo
         arguments:
