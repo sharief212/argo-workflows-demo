@@ -27,7 +27,7 @@ spec:
           - name: container_image
             value: sharief212/devops-toolkit
           - name: container_tag
-            value: "1.0.7"
+            value: "1.0.6"
       - name: deploy-staging
         template: echo
         arguments:
