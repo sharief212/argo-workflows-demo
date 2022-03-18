@@ -1,63 +1,85 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Workflow
+kind: Sensor
 metadata:
-  generateName: devops-toolkit-
-  labels:
-    workflows.argoproj.io/archive-strategy: "false"
+  name: webhook
 spec:
-  entrypoint: full
-  serviceAccountName: argo
-  volumes:
-  - name: kaniko-secret
-    secret:
-      secretName: regcred
-  templates:
-  - name: full
-    dag:
-      tasks:
-      - name: build-container-image
-        templateRef:
-          name: container-image
-          template: build-kaniko-git
-          clusterScope: true
-        arguments:
-          parameters:
-          - name: app_repo
-            value: git://github.com/sharief212/argo-workflows-demo
-          - name: container_image
-            value: sharief212/devops-toolkit
-          - name: container_tag
-            value: "1.0.7"
-      - name: deploy-staging
-        template: echo
-        arguments:
-          parameters:
-          - name: message
-            value: Deploying to the staging cluster...
-        dependencies:
-        - build-container-image
-      - name: tests
-        template: echo
-        arguments:
-          parameters:
-          - name: message
-            value: Running integration tests (before, during, and after the deployment is finished)...
-        dependencies:
-        - build-container-image
-      - name: deploy-production
-        template: echo
-        arguments:
-          parameters:
-          - name: message
-            value: Deploying to the production cluster...
-        dependencies:
-        - tests
-  - name: echo
-    inputs:
-      parameters:
-      - name: message
-    container:
-      image: alpine
-      command: [echo]
-      args:
-      - "{{inputs.parameters.message}}"
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+  - name: test-dep
+    eventSourceName: webhook
+    eventName: example
+  triggers:
+  - template:
+      name: trigger
+      argoWorkflow:
+        group: argoproj.io
+        version: v1alpha1
+        resource: workflows
+        operation: submit
+        source:
+          resource:
+            apiVersion: argoproj.io/v1alpha1
+            kind: Workflow
+            metadata:
+              generateName: argo-workflow-
+              namespace: argo-events
+            spec:
+              entrypoint: build
+              volumes:
+              - name: kaniko-secret
+                secret:
+                  secretName: regcred
+              - name: github-access
+                secret:
+                  secretName: git-creds
+              templates:
+              - name: build
+                dag:
+                  tasks:
+                  - name: build-container-image
+                    templateRef:
+                      name: container-image
+                      template: build-kaniko-git
+                      clusterScope: true
+                    arguments:
+                      parameters:
+                      - name: app_repo
+                        value: "git://github.com/sharief212/argo-workflows-demo"
+                      - name: container_image
+                        value: sharief212/devops-toolkit
+                      - name: container_tag
+                        value: "1.0.7"
+                  - name: deploy-staging
+                    template: echo
+                    arguments:
+                      parameters:
+                      - name: message
+                        value: Deploying to the staging cluster...
+                    dependencies:
+                    - build-container-image
+                  - name: tests
+                    template: echo
+                    arguments:
+                      parameters:
+                      - name: message
+                        value: Running integration tests (before, during, and after the deployment is finished)...
+                    dependencies:
+                    - build-container-image
+                  - name: deploy-production
+                    template: echo
+                    arguments:
+                      parameters:
+                      - name: message
+                        value: Deploying to the production cluster...
+                    dependencies:
+                    - tests                       
+              - name: echo
+                inputs:
+                  parameters:
+                  - name: message
+                container:
+                  image: alpine
+                  command: [echo]
+                  args:
+                  - "{{inputs.parameters.message}}"      
