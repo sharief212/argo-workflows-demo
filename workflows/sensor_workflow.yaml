@@ -55,7 +55,7 @@ spec:
                     arguments:
                       parameters:
                       - name: message
-                        value: Deploying to the staging cluster.......
+                        value: Deploying to the staging cluster...
                     dependencies:
                     - build-container-image
                   - name: tests
